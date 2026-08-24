@@ -1,6 +1,7 @@
 name: MSBuild
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -12,14 +13,15 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on:
+  workflow_dispatch: windows-latest
 
     steps:
       - uses: actions/checkout@v4
       
       - name: Generate build number
         id: buildnumber
-        uses: onyxmueller/build-tag-number@v1
+        uses: onyxmueller/build-tag-number@v
         with:
           token: ${{secrets.GITHUB_TOKEN}} 
           
@@ -47,47 +49,49 @@ jobs:
         uses: actions/upload-artifact@v4
         with: 
           name: unsigned-exe
-          retention-days: 1
+          retention-days: 
           path: |
             Release64\Ditto.exe
             Release64\ICU_Loader.dll
             Release64\Addins\DittoUtil.dll
             
       - id: sign-exe
-        uses: signpath/github-action-submit-signing-request@v1.1
+        uses: signpath/github-action-submit-signing-request@v.
         with:
           api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'fcf33ea4-4343-46b3-be50-f8fe64e1a900'
+          organization-id: 'fcf33ea4-4343-46b3-be50-f8fe64ea900'
           project-slug: 'Ditto'
           artifact-configuration-slug: 'exe'
           signing-policy-slug: 'release-signing'
           github-artifact-id: '${{ steps.upload-unsigned-exe.outputs.artifact-id }}'
-          wait-for-completion: true
+          wait-for-completion:
+  workflow_dispatch: true
           output-artifact-directory: '/Release64'      
                    
       - name: Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.7
+        uses: Minionguyjpro/Inno-Setup-Action@v.2.7
         with:
-          path: DittoSetup\DittoSetup_10.iss
+          path: DittoSetup\DittoSetup_0.iss
           
       - name: upload-unsigned-artifact
         id: upload-unsigned-artifact
         uses: actions/upload-artifact@v4
         with: 
           name: unsigned-intaller
-          retention-days: 1
+          retention-days: 
           path: DittoSetup\output\DittoSetup_${{env.VERSION_FILENAME}}.exe
           
       - id: sing-installer
-        uses: signpath/github-action-submit-signing-request@v1.1
+        uses: signpath/github-action-submit-signing-request@v.
         with:
           api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: 'fcf33ea4-4343-46b3-be50-f8fe64e1a900'
+          organization-id: 'fcf33ea4-4343-46b3-be50-f8fe64ea900'
           project-slug: 'Ditto'
           artifact-configuration-slug: 'Installer'
           signing-policy-slug: 'release-signing'
           github-artifact-id: '${{ steps.upload-unsigned-artifact.outputs.artifact-id }}'
-          wait-for-completion: true
+          wait-for-completion:
+  workflow_dispatch: true
           output-artifact-directory: '/DittoSetup/output'          
           
       - name: Build Portable
@@ -135,7 +139,7 @@ jobs:
             (Get-Content 'DittoSetup\appx\appxmanifest.xml' -Raw).Replace("%version%", "${{env.VERSION_DOT_FILENAME}}") | Out-File 'DittoSetup\appx\appxmanifest.xml'  
             cd DittoSetup\appx
 
-            $env:Path += ";C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86"
+            $env:Path += ";C:\Program Files (x86)\Windows Kits\0\bin\0.0.2600.0\x86"
         
             makeappx.exe pack /f files.ini /p Ditto_${{env.VERSION_FILENAME}}.appx
             signtool.exe sign -f my.pfx -fd SHA256 -v Ditto_${{env.VERSION_FILENAME}}.appx
@@ -148,8 +152,10 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
           uploadPath: DittoSetup\output\
           tag: ${{env.VERSION_FILENAME}}
-          previous_tag: 3.25.113.0
+          previous_tag: 3.25.3.0
         run: |
              npm install ./DittoSetup/GitHubRelease
              node ./DittoSetup/GitHubRelease/index.js
+
+
 
